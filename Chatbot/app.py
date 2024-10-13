@@ -1,60 +1,106 @@
-# Building chatbot using paid LLM's and open source LLM
-
-from langchain_openai import ChatOpenAI # Open AI API
-from langchain_core.prompts import ChatPromptTemplate # Prompt template
-from langchain_core.output_parsers import StrOutputParser # Default output parser whenever a LLM model gives any response
-from langchain_community.llms import Ollama
-from langchain_groq import ChatGroq
-import streamlit as st # UI
 import os
 from dotenv import load_dotenv
+import streamlit as st
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_groq import ChatGroq
 
+# Load the .env file to retrieve API keys securely
 load_dotenv()
 
-# Langsmith tracking (Observable)
-os.environ['GROQ_API_KEY'] = os.getenv("GROQ_API_KEY")
-# os.environ['OPENAI_API_KEY'] = os.getenv("OPENAI_API_KEY")
-os.environ["LANGCHAIN_TRACING_VR"] = "true"
-os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
+# Retrieve API keys from the environment
+langchain_api_key = os.getenv("LANGCHAIN_API_KEY")
+groq_api_key = os.getenv("GROQ_API_KEY")
 
-# Defining Prompt Template
+# Check if the necessary environment variables are set
+if langchain_api_key is None:
+    st.error("Error: The environment variable 'LANGCHAIN_API_KEY' is not set. Please check your .env file.")
+    raise ValueError("LANGCHAIN_API_KEY is missing")
+if groq_api_key is None:
+    st.error("Error: The environment variable 'GROQ_API_KEY' is not set. Please check your .env file.")
+    raise ValueError("GROQ_API_KEY is missing")
 
-prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system","Act as a cooking chef"), # If user asked any other unrelated topics, it will not answer. It will respond accordingly.
-        ("user","Question:{question}")
-    ]
+# Streamlit UI
+st.set_page_config(page_title="Personal Assistant", page_icon="🤖", layout="wide")
+st.title("Personal Assistant 🤖")
+st.subheader("How can I assist you today?")
+
+# Load and display assistant image
+assistant_image = r"Chatbot\assets\AI assistant chatbot.png"  # Corrected path
+st.image(assistant_image, width=100)
+
+# Task Selector
+task_type = st.selectbox("Select task type:", ["General Question", "Reminder", "Task Management", "Cooking Advice"])
+
+# Get user input
+input_text = st.text_input(f"Ask a {task_type.lower()} question or provide details:", key="user_input")
+
+# Using the Groq inference engine
+groqApi = ChatGroq(model="gemma-7b-It", temperature=1)
+output_parser = StrOutputParser()
+
+# Prompt-based chain selection
+if task_type == "General Question":
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a knowledgeable assistant capable of answering any general questions."),
+         ("user", "Question:{question}")]
+    )
+elif task_type == "Reminder":
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a personal assistant that helps set reminders."),
+         ("user", "Reminder:{reminder}")]
+    )
+elif task_type == "Task Management":
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are an assistant that helps manage and organize tasks."),
+         ("user", "Task:{task}")]
+    )
+else:  # Cooking Advice
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a chef, offering cooking advice and tips."),
+         ("user", "Cooking question:{question}")]
     )
 
-# UI
+chain = prompt | groqApi | output_parser
 
-st.title("Talk with the chef 👨‍🍳")
-inputText = st.text_input("Ask questions about planets")
+# Initialize chat history
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
 
-# Not having the open AI API key, but learning to create functionality
-# Ollama enables us to run large language models locally, automatically does the compression
+# Function to add message to chat history
+def add_to_chat_history(role, content):
+    st.session_state.chat_history.append({"role": role, "content": content})
 
-# llm = ChatOpenAI(model="llm")
-# llm = Ollama(model="llama2") # Using ollama and llama2 model
-# outputParser = StrOutputParser() 
-# chain = prompt|llm|outputParser # Defining chain - Combining 
+# If user input is provided, process the input using the LLM
+if st.button("Enter"):
+    if input_text:
+        try:
+            # Construct the input based on task type
+            if task_type == "General Question":
+                result = chain.invoke({'question': input_text})
+            elif task_type == "Reminder":
+                result = chain.invoke({'reminder': input_text})
+            elif task_type == "Task Management":
+                result = chain.invoke({'task': input_text})
+            else:
+                result = chain.invoke({'question': input_text})
 
+            # Display the result in Streamlit
+            st.write(result)
 
-# Using groq inference engine
+            # Add user input and result to chat history
+            add_to_chat_history("user", input_text)
+            add_to_chat_history("assistant", result)
 
-# groqllm = ChatGroq(model="llama3-70b-8192",temperature=0) 
-groqApi = ChatGroq(model="gemma-7b-It",temperature=1)
-outputparser = StrOutputParser()
-chainSec = prompt|groqApi|outputparser
+            # Clear the input field after submission
+            st.session_state.user_input = ""  # Clear input field
 
-#  Langchain provides features that we can attach in the form of chain
-#1 Prompt
-#2 Integration with llm
-#3 Output Parser
+        except Exception as e:
+            st.error(f"An error occurred while processing your request: {e}")
+    else:
+        st.info(f"Please enter your {task_type.lower()} details.")
 
-# if inputText:
-#     st.write(chain.invoke({'question':inputText}))
-    
-    
-if inputText:
-    st.write(chainSec.invoke({'question':inputText}))
+# Display chat history
+st.markdown("### Chat History")
+for message in st.session_state.chat_history:
+    st.write(f"**{message['role'].capitalize()}**: {message['content']}")
