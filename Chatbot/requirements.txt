@@ -5,3 +5,5 @@ streamlit #For UI
 langchain_community #For calling open source llms
 langserve #For deployments, creating api routes
 langchain_groq
+chainlit
+langchain_memory
