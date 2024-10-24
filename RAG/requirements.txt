@@ -9,3 +9,7 @@ chainlit
 langchain_memory4
 google-api-python-client
 transformers
+flask 
+langchain 
+langchain_groq 
+python-dotenv
