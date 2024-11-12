@@ -1,11 +1,10 @@
-langchain_openai #For using OpenAI API
-langchain_core #For embedding chatprompt template
-python-dotenv
-streamlit #For UI
-langchain_community #For calling open source llms
-langserve #For deployments, creating api routes
-langchain_groq
-chainlit
-langchain_memory4
-google-api-python-client
-transformers
+langchain>=0.6.0          # Core LangChain package
+python-dotenv             # For loading environment variables
+streamlit                 # For building the UI
+langchain-openai          # For OpenAI API integration
+langchain-community       # For open-source LLM support
+langchain-groq            # For Groq model support (if needed)
+langserve                 # For deploying APIs
+chainlit                  # For interactive chat interface
+google-api-python-client # For Google API support
+transformers              # For using pre-trained transformers models
