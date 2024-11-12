@@ -29,12 +29,6 @@ st.subheader("How can I assist you today?")
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
-# Load and display assistant image
-assistant_image = "Chatbot/assets/AI assistant chatbot.png"
-if os.path.exists(assistant_image):
-    st.image(assistant_image, width=100)
-else:
-    st.warning("Assistant image not found. Please check the path.")
 
 # Task Selector
 task_type = st.selectbox("Select task type:", ["General Question", "Reminder", "Task Management", "Cooking Advice"])
