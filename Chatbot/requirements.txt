@@ -1,10 +1,10 @@
-langchain>=0.6.0          # Core LangChain package
-python-dotenv             # For loading environment variables
-streamlit                 # For building the UI
-langchain-openai          # For OpenAI API integration
-langchain-community       # For open-source LLM support
-langchain-groq            # For Groq model support (if needed)
-langserve                 # For deploying APIs
-chainlit                  # For interactive chat interface
-google-api-python-client # For Google API support
-transformers              # For using pre-trained transformers models
+langchain==0.3.7           # Use a stable version available
+python-dotenv              # For environment variables
+streamlit                  # For UI
+langchain-openai           # For OpenAI API integration
+langchain-community        # For open-source LLM support
+langchain-groq             # For Groq model support (if needed)
+langserve                  # For deploying APIs
+chainlit                   # For interactive chat interface
+google-api-python-client  # For Google API support
+transformers               # For using pre-trained transformers models
