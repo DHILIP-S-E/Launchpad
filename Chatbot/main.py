@@ -34,7 +34,8 @@ async def assistant(message: cl.Message):
         await cl.Message(content=f"Error processing your request: {str(e)}").send()
 
 if __name__ == "__main__":
+    # Set the port for deployment environments
+    port = int(os.getenv("PORT", 8000))
+    cl.run(host="0.0.0.0", port=port)
     # Send a welcome message after the app starts
-    cl.run()
-    # Welcome message displayed when the chatbot starts
     cl.Message(content="Welcome to the Dental Assistant Chatbot! How can I assist you today?").send()
