@@ -25,9 +25,10 @@ st.set_page_config(page_title="Personal Assistant", page_icon="🤖", layout="wi
 st.title("Personal Assistant 🤖")
 st.subheader("How can I assist you today?")
 
-# Load and display assistant image
-assistant_image = r"Chatbot\assets\AI assistant chatbot.png"  # Corrected path
-st.image(assistant_image, width=100)
+# Initialize chat history
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
+
 
 # Task Selector
 task_type = st.selectbox("Select task type:", ["General Question", "Reminder", "Task Management", "Cooking Advice"])
