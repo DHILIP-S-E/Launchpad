@@ -1,0 +1,2 @@
+crewai
+crewai_tools  # If this is a separate library for Serper tool
