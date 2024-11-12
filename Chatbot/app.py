@@ -25,14 +25,15 @@ st.set_page_config(page_title="Personal Assistant", page_icon="🤖", layout="wi
 st.title("Personal Assistant 🤖")
 st.subheader("How can I assist you today?")
 
-# Load and display assistant image
-assistant_image = r"Chatbot\assets\AI assistant chatbot.png"  # Corrected path
-st.image(assistant_image, width=100)
+# Initialize chat history
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
+
 
 # Task Selector
 task_type = st.selectbox("Select task type:", ["General Question", "Reminder", "Task Management", "Cooking Advice"])
 
-# Get user input
+# Get user input without modifying `st.session_state` directly
 input_text = st.text_input(f"Ask a {task_type.lower()} question or provide details:", key="user_input")
 
 # Using the Groq inference engine
@@ -63,10 +64,6 @@ else:  # Cooking Advice
 
 chain = prompt | groqApi | output_parser
 
-# Initialize chat history
-if 'chat_history' not in st.session_state:
-    st.session_state.chat_history = []
-
 # Function to add message to chat history
 def add_to_chat_history(role, content):
     st.session_state.chat_history.append({"role": role, "content": content})
@@ -92,15 +89,12 @@ if st.button("Enter"):
             add_to_chat_history("user", input_text)
             add_to_chat_history("assistant", result)
 
-            # Clear the input field after submission
-            st.session_state.user_input = ""  # Clear input field
-
         except Exception as e:
             st.error(f"An error occurred while processing your request: {e}")
     else:
         st.info(f"Please enter your {task_type.lower()} details.")
 
-# Display chat history
+# Display chat history as a text area to avoid direct modification issues
 st.markdown("### Chat History")
-for message in st.session_state.chat_history:
-    st.write(f"**{message['role'].capitalize()}**: {message['content']}")
+chat_display = "\n".join([f"**{msg['role'].capitalize()}**: {msg['content']}" for msg in st.session_state.chat_history])
+st.text_area("Chat History", value=chat_display, height=300, key="chat_display", disabled=True)
