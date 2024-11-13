@@ -1,9 +1,9 @@
+import os
 import chainlit as cl
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-import os
 
 # Load environment variables from .env file
 load_dotenv()
@@ -34,13 +34,12 @@ async def assistant(message: cl.Message):
         await cl.Message(content=f"Error processing your request: {str(e)}").send()
 
 if __name__ == "__main__":
-    # Get the port from the environment variable or use 8000 as a default
-    port = int(os.getenv("PORT", "8000"))
-    # Print statements to help with debugging in deployment logs
-    print("Attempting to bind to host: 0.0.0.0")
-    print("Attempting to bind to port:", port)
-    
-    # Run Chainlit, binding to 0.0.0.0 and using the specified port
-    cl.run(host="0.0.0.0", port=port)
-    # Send a welcome message after the app starts
+    # Ensure binding to 0.0.0.0 and using the correct PORT
+    port = int(os.getenv("PORT", 8000))  # Default to 8000 if PORT is not set
+    host = "0.0.0.0"  # Listen on all network interfaces
+
+    print(f"Binding to {host} on port {port}...")
+    cl.run(host=host, port=port)
+
+    # Welcome message displayed when the chatbot starts
     cl.Message(content="Welcome to the Dental Assistant Chatbot! How can I assist you today?").send()
