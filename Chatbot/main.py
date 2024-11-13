@@ -18,28 +18,36 @@ prompt = """
 """
 prompt_instance = ChatPromptTemplate.from_template(prompt)
 
+# The app should bind to all interfaces
+host = "0.0.0.0"
+# Get the PORT from the environment variable or default to 8000
+port = int(os.getenv("PORT", 8000))
+
+# Set up the Groq LLM model
+groq_llm = ChatGroq(model="gemma-7b-It", temperature=2)
+output = StrOutputParser()
+
+# Chain for processing
+chain = prompt_instance | groq_llm | output
+
 @cl.on_message
 async def assistant(message: cl.Message):
     input_text = message.content
-    groq_llm = ChatGroq(model="gemma-7b-It", temperature=2)
-    output = StrOutputParser()
-    chain = prompt_instance | groq_llm | output
 
+    # Send a message to indicate processing
     await cl.Message(content="Processing your question...").send()
     
     try:
+        # Invoke the chain and get the response
         res = await chain.ainvoke({'question': input_text})
         await cl.Message(content=res).send()
     except Exception as e:
         await cl.Message(content=f"Error processing your request: {str(e)}").send()
 
 if __name__ == "__main__":
-    # Ensure binding to 0.0.0.0 and using the correct PORT
-    port = int(os.getenv("PORT", 8000))  # Default to 8000 if PORT is not set
-    host = "0.0.0.0"  # Listen on all network interfaces
-
-    print(f"Binding to {host} on port {port}...")
-    cl.run(host=host, port=port)
-
     # Welcome message displayed when the chatbot starts
     cl.Message(content="Welcome to the Dental Assistant Chatbot! How can I assist you today?").send()
+
+    # Run the Chainlit app with the specified host and port
+    print(f"Binding to {host} on port {port}...")
+    cl.run(host=host, port=port)
