@@ -9,31 +9,38 @@ import os
 load_dotenv()
 
 # Set up the Groq API key from the environment
-os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
+groq_api_key = os.getenv("GROQ_API_KEY")
+if not groq_api_key:
+    raise ValueError("GROQ_API_KEY is missing from the environment.")
 
 # Updated ChatGPT-like prompt
-prompt = """
+prompt_template = """
     (system: You are a helpful assistant capable of answering a variety of questions. Provide detailed and informative responses.),
     (user: {question})
 """
-prompt_instance = ChatPromptTemplate.from_template(prompt)
+prompt_instance = ChatPromptTemplate.from_template(prompt_template)
+
+@cl.on_startup
+async def startup():
+    # Send a welcome message after the app starts
+    await cl.Message(content="Welcome to the Dental Assistant Chatbot! How can I assist you today?").send()
 
 @cl.on_message
 async def assistant(message: cl.Message):
     input_text = message.content
-    groq_llm = ChatGroq(model="gemma-7b-It", temperature=2)
+    groq_llm = ChatGroq(model="gemma-7b-It", temperature=2, api_key=groq_api_key)  # Add API key directly
+
     output = StrOutputParser()
     chain = prompt_instance | groq_llm | output
 
     await cl.Message(content="Processing your question...").send()
     
     try:
+        # Using 'await' on the entire chain invocation
         res = await chain.ainvoke({'question': input_text})
         await cl.Message(content=res).send()
     except Exception as e:
         await cl.Message(content=f"Error processing your request: {str(e)}").send()
 
 if __name__ == "__main__":
-    # Explicitly set the host and port
-    port = int(os.getenv("PORT", 8000))
-    cl.run(host="0.0.0.0", port=port, debug=True)
+    cl.run()
