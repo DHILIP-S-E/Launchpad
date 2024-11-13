@@ -41,5 +41,6 @@ async def assistant(message: cl.Message):
         await cl.Message(content=f"Error processing your request: {str(e)}").send()
 
 if __name__ == "__main__":
-    send_welcome_message()  # Send welcome message on startup
+    import asyncio
+    asyncio.run(send_welcome_message())  # Send welcome message on startup
     cl.run()
