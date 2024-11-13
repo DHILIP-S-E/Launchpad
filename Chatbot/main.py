@@ -20,9 +20,7 @@ prompt_template = """
 """
 prompt_instance = ChatPromptTemplate.from_template(prompt_template)
 
-@cl.on_startup
-async def startup():
-    # Send a welcome message after the app starts
+async def send_welcome_message():
     await cl.Message(content="Welcome to the Dental Assistant Chatbot! How can I assist you today?").send()
 
 @cl.on_message
@@ -43,4 +41,5 @@ async def assistant(message: cl.Message):
         await cl.Message(content=f"Error processing your request: {str(e)}").send()
 
 if __name__ == "__main__":
+    send_welcome_message()  # Send welcome message on startup
     cl.run()

@@ -5,6 +5,7 @@ langchain-openai           # For OpenAI API integration
 langchain-community        # For open-source LLM support
 langchain-groq             # For Groq model support (if needed)
 langserve                  # For deploying APIs
-chainlit                   # For interactive chat interface
+chainlit==1.3.2
+dotenv
 google-api-python-client  # For Google API support
 transformers               # For using pre-trained transformers models
