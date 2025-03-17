@@ -5,96 +5,65 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
 
-# Load the .env file to retrieve API keys securely
+# Load API keys
 load_dotenv()
-
-# Retrieve API keys from the environment
-langchain_api_key = os.getenv("LANGCHAIN_API_KEY")
 groq_api_key = os.getenv("GROQ_API_KEY")
 
-# Check if the necessary environment variables are set
-if langchain_api_key is None:
-    st.error("Error: The environment variable 'LANGCHAIN_API_KEY' is not set. Please check your .env file.")
-    raise ValueError("LANGCHAIN_API_KEY is missing")
-if groq_api_key is None:
-    st.error("Error: The environment variable 'GROQ_API_KEY' is not set. Please check your .env file.")
-    raise ValueError("GROQ_API_KEY is missing")
+if not groq_api_key:
+    st.error("Missing API key. Check your .env file.")
+    st.stop()
 
-# Streamlit UI
-st.set_page_config(page_title="Personal Assistant", page_icon="🤖", layout="wide")
-st.title("Personal Assistant 🤖")
+# Set up Streamlit UI
+st.set_page_config(page_title="AI Assistant", page_icon="🤖", layout="wide")
+
+st.markdown("<h1 style='text-align: center;'>AI Assistant 🤖</h1>", unsafe_allow_html=True)
 st.subheader("How can I assist you today?")
 
 # Initialize chat history
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
+# Task selection
+task_type = st.selectbox("Select a task:", ["General Question", "Task Management", "Cooking Advice"])
 
-# Task Selector
-task_type = st.selectbox("Select task type:", ["General Question", "Reminder", "Task Management", "Cooking Advice"])
+# User input
+input_text = st.text_input(f"Enter your {task_type.lower()} request:")
 
-# Get user input without modifying `st.session_state` directly
-input_text = st.text_input(f"Ask a {task_type.lower()} question or provide details:", key="user_input")
-
-# Using the Groq inference engine
-groqApi = ChatGroq(model="gemma-7b-It", temperature=1)
+# Set up the AI model
+groqApi = ChatGroq(model="gemma2-9b-it", temperature=1)
 output_parser = StrOutputParser()
 
-# Prompt-based chain selection
-if task_type == "General Question":
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are a knowledgeable assistant capable of answering any general questions."),
-         ("user", "Question:{question}")]
-    )
-elif task_type == "Reminder":
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are a personal assistant that helps set reminders."),
-         ("user", "Reminder:{reminder}")]
-    )
-elif task_type == "Task Management":
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are an assistant that helps manage and organize tasks."),
-         ("user", "Task:{task}")]
-    )
-else:  # Cooking Advice
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are a chef, offering cooking advice and tips."),
-         ("user", "Cooking question:{question}")]
-    )
+# Define system prompts for each task
+task_prompts = {
+    "General Question": "You are a knowledgeable AI assistant.",
+    "Task Management": "You help manage and organize tasks efficiently.",
+    "Cooking Advice": "You are a chef, providing cooking tips and recipes."
+}
+
+# Prompt template
+prompt = ChatPromptTemplate.from_messages([
+    ("system", task_prompts[task_type]),
+    ("user", "{query}")
+])
 
 chain = prompt | groqApi | output_parser
 
-# Function to add message to chat history
-def add_to_chat_history(role, content):
-    st.session_state.chat_history.append({"role": role, "content": content})
-
-# If user input is provided, process the input using the LLM
-if st.button("Enter"):
+# Process user request
+if st.button("Submit"):
     if input_text:
         try:
-            # Construct the input based on task type
-            if task_type == "General Question":
-                result = chain.invoke({'question': input_text})
-            elif task_type == "Reminder":
-                result = chain.invoke({'reminder': input_text})
-            elif task_type == "Task Management":
-                result = chain.invoke({'task': input_text})
-            else:
-                result = chain.invoke({'question': input_text})
-
-            # Display the result in Streamlit
+            result = chain.invoke({"query": input_text})
             st.write(result)
 
-            # Add user input and result to chat history
-            add_to_chat_history("user", input_text)
-            add_to_chat_history("assistant", result)
-
+            # Save chat history
+            st.session_state.chat_history.append({"role": "User", "content": input_text})
+            st.session_state.chat_history.append({"role": "AI", "content": result})
         except Exception as e:
-            st.error(f"An error occurred while processing your request: {e}")
+            st.error(f"Error: {e}")
     else:
-        st.info(f"Please enter your {task_type.lower()} details.")
+        st.warning("Please enter a valid input.")
 
-# Display chat history as a text area to avoid direct modification issues
-st.markdown("### Chat History")
-chat_display = "\n".join([f"**{msg['role'].capitalize()}**: {msg['content']}" for msg in st.session_state.chat_history])
-st.text_area("Chat History", value=chat_display, height=300, key="chat_display", disabled=True)
+# Display chat history
+st.markdown("### Conversation History")
+chat_display = "\n".join([f"**{msg['role']}**: {msg['content']}" for msg in st.session_state.chat_history])
+st.text_area("Chat History", value=chat_display, height=300, disabled=True)
